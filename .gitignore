@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Model weights (too large for git — 243MB)
+brain_tumor_model.keras
+*.h5
+
+# Dataset (336MB — not needed in repo)
+dataset/
+
+# Uploaded images & generated outputs
+static/uploads/
+static/gradcam_results/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

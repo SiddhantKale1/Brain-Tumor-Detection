@@ -1,0 +1,364 @@
+<style>
+  :root {
+    --bg: #eaf4fb;
+    --card-bg: #ffffff;
+    --text: #1a2b3c;
+    --muted: #5a7a96;
+    --accent: #0ea5e9;
+    --accent-hover: #0284c7;
+    --primary: #38bdf8;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --danger-border: #fca5a5;
+    --border: #c8e0f0;
+    --border-light: #eaf4fb;
+    --shadow-sm: 0 2px 6px rgba(14, 165, 233, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 12px 24px -6px rgba(14, 165, 233, 0.1), 0 6px 12px -6px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 24px 48px -12px rgba(14, 165, 233, 0.15), 0 12px 24px -12px rgba(0, 0, 0, 0.08);
+    --radius-xl: 32px;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page-shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 24px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 40px;
+    padding: 24px 32px;
+    border-radius: var(--radius-lg);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .subtitle {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  .header-tag {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: var(--border-light);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Main Card Container */
+  .card {
+    background: var(--card-bg);
+    border-radius: var(--radius-xl);
+    padding: 48px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 40px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* Forms & Inputs */
+  form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .file-input {
+    position: relative;
+  }
+
+  .file-input input[type="file"] {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .file-input input[type="file"]:focus {
+    border-color: var(--primary);
+  }
+
+  .file-input input[type="file"]::file-selector-button {
+    margin-right: 16px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .file-input input[type="file"]::file-selector-button:hover {
+    background: var(--bg);
+  }
+
+  button {
+    padding: 18px 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--accent);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+
+  button:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  button:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .helper-text {
+    margin: 16px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .error {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* Bento Grid Layout */
+  .results {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: 
+      "upload gradcam"
+      "prediction prediction";
+    gap: 24px;
+  }
+
+  .panel {
+    background: var(--card-bg);
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .panel:nth-child(1) { grid-area: upload; }
+  .panel:nth-child(2) { grid-area: prediction; }
+  .panel:nth-child(3) { grid-area: gradcam; }
+
+  .headline {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .meta {
+    color: var(--muted);
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Image Containers */
+  .imgwrap {
+    margin-top: 24px;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .imgwrap img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+    display: block;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Progress Bars */
+  .probs-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 24px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .prob-row {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .prob-label {
+    min-width: 120px;
+    text-transform: capitalize;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .prob-bar-shell {
+    flex-grow: 1;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--border-light);
+    overflow: hidden;
+    margin: 0 20px;
+    position: relative;
+  }
+
+  .prob-bar-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--primary);
+    transform-origin: left;
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .prob-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    min-width: 56px;
+    text-align: right;
+    color: var(--text);
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: var(--border);
+    margin: 32px 0;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    line-height: 1.6;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 800px) {
+    .page-shell {
+      padding: 32px 16px;
+    }
+    .results {
+      grid-template-columns: 1fr;
+      grid-template-areas: 
+        "upload"
+        "gradcam"
+        "prediction";
+      gap: 24px;
+    }
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 24px;
+    }
+    .card {
+      padding: 32px 24px;
+    }
+    form {
+      grid-template-columns: 1fr;
+    }
+    button {
+      width: 100%;
+    }
+  }
+</style>

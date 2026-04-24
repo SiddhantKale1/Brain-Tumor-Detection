@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detection Results • Brain Tumor MRI</title>
+    <!-- Reuse the same styling as the main detect page -->
+    {% include "shared_styles.html" %}
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="header">
+        <div class="brand">
+          <div>
+            <h1>Detection Results</h1>
+            <p class="subtitle">
+              Review the predicted tumor type and full probability distribution for
+              the uploaded MRI slice.
+            </p>
+          </div>
+        </div>
+        <div class="header-tag">Results</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">2. Model output</div>
+          <a href="/detect" style="font-size: 12px; color: var(--accent); text-decoration: none;">
+            ← Analyze another MRI
+          </a>
+        </div>
+
+        {% if uploaded_image %}
+          <div class="results">
+            <div class="panel">
+              <p class="headline">Uploaded MRI</p>
+              <p class="meta">Preview of the slice you analyzed.</p>
+              <div class="imgwrap">
+                <img src="{{ url_for('static', filename=uploaded_image) }}" alt="Uploaded MRI" />
+              </div>
+            </div>
+
+            <div class="panel">
+              <p class="headline">Model prediction</p>
+              {% if headline %}
+                <p class="meta" style="margin-bottom: 4px;"><strong>{{ headline }}</strong></p>
+              {% endif %}
+              {% if confidence %}
+                <p class="meta"><strong>Top-class confidence:</strong> {{ confidence }}</p>
+              {% endif %}
+              {% if tumor_type %}
+                <p class="meta"><strong>Predicted tumor type:</strong> {{ tumor_type }}</p>
+              {% endif %}
+
+              {% if probs %}
+                <hr style="border: 0; border-top: 1px solid rgba(148,163,184,0.35); margin: 10px 0;" />
+                <p class="meta"><strong>Class probability distribution</strong></p>
+                <ul class="probs-list">
+                  {% for name, value in probs.items() %}
+                    <li class="prob-row">
+                      <span class="prob-label">{{ name }}</span>
+                      <span class="prob-bar-shell">
+                        <span
+                          class="prob-bar-fill"
+                          style="transform: scaleX({{ value|round(4) }});"
+                        ></span>
+                      </span>
+                      <span class="prob-value">{{ '%.2f'|format(value * 100) }}%</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+
+            <div class="panel">
+              <p class="headline">Grad-CAM result</p>
+              <p class="meta">
+                Heatmap showing which area of the MRI most influenced the model prediction.
+                Warmer regions indicate stronger focus.
+              </p>
+              <div id="gradcam-loading" class="meta" style="margin-top: 10px;">
+                Generating Grad-CAM visualization...
+              </div>
+              <div id="gradcam-error" class="error" style="display: none;"></div>
+              <div id="gradcam-wrap" class="imgwrap" style="display: none;">
+                <img id="gradcam-image" src="" alt="Grad-CAM heatmap" />
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <p class="meta">No result to display. Go back to the <a href="/detect" style="color: var(--accent);">detection page</a>.</p>
+        {% endif %}
+
+
+      </div>
+    </div>
+    {% if gradcam_source %}
+      <script>
+        (async function loadGradcam() {
+          const loadingEl = document.getElementById("gradcam-loading");
+          const errorEl = document.getElementById("gradcam-error");
+          const wrapEl = document.getElementById("gradcam-wrap");
+          const imageEl = document.getElementById("gradcam-image");
+
+          try {
+            const response = await fetch(`/gradcam?image={{ gradcam_source|urlencode }}`);
+            const payload = await response.json();
+
+            if (!response.ok || !payload.ok) {
+              throw new Error(payload.error || "Grad-CAM generation failed.");
+            }
+
+            imageEl.src = payload.image_url;
+            wrapEl.style.display = "block";
+            loadingEl.style.display = "none";
+          } catch (error) {
+            loadingEl.style.display = "none";
+            errorEl.style.display = "block";
+            errorEl.innerHTML = "<strong>" + error.message + "</strong>";
+          }
+        })();
+      </script>
+    {% endif %}
+  </body>
+</html>
+

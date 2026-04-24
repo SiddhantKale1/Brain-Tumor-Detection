@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detect • Brain Tumor MRI</title>
+    {% include "shared_styles.html" %}
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="header">
+        <div class="brand">
+          <div>
+            <h1>Start a new detection</h1>
+            <p class="subtitle">
+              Upload a brain MRI slice, then continue to the results page to view
+              the predicted tumor type.
+            </p>
+          </div>
+        </div>
+        <div class="header-tag">Step 1 • Upload</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Upload MRI image</div>
+          <a href="/" style="font-size: 12px; color: var(--accent); text-decoration: none;">
+            ← Back to landing
+          </a>
+        </div>
+
+        <form action="/predict" method="post" enctype="multipart/form-data">
+          <div class="file-input">
+            <input type="file" name="file" accept="image/*" required />
+          </div>
+          <button type="submit">Detect</button>
+        </form>
+
+        <p class="helper-text">
+          Supported formats: JPG, PNG, BMP, WEBP
+        </p>
+
+        {% if error %}
+          <div class="error"><strong>{{ error }}</strong></div>
+        {% endif %}
+
+        {% if uploaded_image %}
+          <div class="results">
+            <div class="panel">
+              <p class="headline">Uploaded MRI</p>
+              <p class="meta">Preview of the image that will be analyzed.</p>
+              <div class="imgwrap">
+                <img src="{{ url_for('static', filename=uploaded_image) }}" alt="Uploaded MRI" />
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+
+      </div>
+    </div>
+  </body>
+</html>
+
