@@ -30,3 +30,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+# Dynamic clinical PDF reports
+static/reports/*.pdf
+!static/reports/.gitkeep
