@@ -17,12 +17,12 @@ The web application is built with Flask and allows users to upload an MRI image,
 
 The project is mainly divided into these parts:
 
-- [app.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/app.py): Flask web application for upload and prediction
-- [main.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/main.py): model training script
-- [debug_model.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_model.py): evaluation and debugging script
-- [gradcam.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/gradcam.py): Grad-CAM heatmap generation
-- [mri_validator.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/mri_validator.py): image validation logic
-- [prepare_dataset_splits.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/prepare_dataset_splits.py): safe dataset split preparation
+- [app.py](app.py): Flask web application for upload and prediction
+- [main.py](main.py): model training script
+- [debug_model.py](debug_model.py): evaluation and debugging script
+- [gradcam.py](gradcam.py): Grad-CAM heatmap generation
+- [mri_validator.py](mri_validator.py): image validation logic
+- [prepare_dataset_splits.py](prepare_dataset_splits.py): safe dataset split preparation
 
 ## 3. Dataset Structure
 
@@ -62,7 +62,7 @@ The system works in two major phases:
 
 ## 5. Training Phase Step by Step
 
-Training is handled in [main.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/main.py).
+Training is handled in [main.py](main.py).
 
 ### Step 1: Load dataset
 
@@ -84,7 +84,7 @@ This is necessary because `ResNet50` expects a fixed image size.
 
 During training, the model applies random transformations to training images:
 
-- horizontal and vertical flip
+- horizontal flip (anatomically valid; vertical flip is omitted because flipping MRI scans vertically inverts superior/inferior cranial axes)
 - small rotation
 - zoom
 - brightness adjustment
@@ -166,7 +166,7 @@ The final saved model file is:
 
 ## 6. Prediction Phase Step by Step
 
-Prediction is handled in [app.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/app.py).
+Prediction is handled in [app.py](app.py).
 
 ### Step 1: User uploads MRI image
 
@@ -194,7 +194,7 @@ The app validates whether the image is likely to be a brain MRI.
 
 Validation includes:
 
-- a custom MRI validator from [mri_validator.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/mri_validator.py)
+- a unified custom MRI validator from [mri_validator.py](mri_validator.py)
 - grayscale-like image check
 - edge structure check
 
@@ -230,17 +230,13 @@ pituitary   = 0.65
 
 The largest probability normally becomes the predicted class.
 
-### Step 7: Pituitary correction rule
+### Step 7: Clean Argmax Classification & Balanced Class Weights
 
-The app contains a custom post-processing rule for pituitary detection.
+Earlier versions experimented with an artificial post-processing rule (`if pituitary_prob > 0.20`). In this production release:
 
-Logic:
-
-- if `pituitary_prob > 0.20`, predict `pituitary`
-- else if `notumor_prob > 0.85` and `pituitary_prob < 0.15`, predict `notumor`
-- otherwise use normal `argmax`
-
-This means the final deployed system is not only deep learning. It is deep learning plus a manual rule.
+- Predictions rely directly on statistical model confidence via `argmax` over calibrated softmax probabilities.
+- Under-representation of pituitary tumors is resolved fundamentally during training using calculated inverse-frequency class weights (`class_weight`) and removing destructive vertical image flips.
+- The Grad-CAM visual explanation is explicitly coupled with the predicted class index to guarantee complete explanation consistency.
 
 ### Step 8: Confidence handling
 
@@ -356,7 +352,7 @@ This makes evaluation more trustworthy.
 
 ## 12. Role of `prepare_dataset_splits.py`
 
-[prepare_dataset_splits.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/prepare_dataset_splits.py) was added to create safer dataset splits.
+[prepare_dataset_splits.py](prepare_dataset_splits.py) was added to create safer dataset splits.
 
 It performs these actions:
 
@@ -368,7 +364,7 @@ It performs these actions:
 
 ## 13. Role of `debug_model.py`
 
-[debug_model.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_model.py) is used for diagnosis and analysis.
+[debug_model.py](debug_model.py) is used for diagnosis and analysis.
 
 It helps with:
 
@@ -399,17 +395,16 @@ This is useful because:
 
 Grad-CAM outputs are generated in two places:
 
-- during web app prediction in [app.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/app.py)
-- during debugging in [debug_model.py](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_model.py)
+- during web app prediction in [app.py](app.py)
+- during debugging in [debug_model.py](debug_model.py)
 
-### Current saved debug outputs
+### Saved debug outputs
 
-At the moment, the following result images are already available in [debug_outputs](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_outputs):
+Diagnostics and visualizations can be generated to the `debug_outputs/` directory:
 
-- [class_samples.png](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_outputs/class_samples.png)
-- [confusion_matrix_current.png](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_outputs/confusion_matrix_current.png)
-- [distribution_training.png](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_outputs/distribution_training.png)
-- [distribution_testing.png](/D:/Sem%206%20prj/Brain%20Tumour%20Detection/Brain%20Tumour%20Detection/tumor/tumor/debug_outputs/distribution_testing.png)
+- `class_distribution.png`
+- `confusion_matrix.png`
+- `debug_gradcam_<label>.jpg`
 
 ### Current Grad-CAM status
 

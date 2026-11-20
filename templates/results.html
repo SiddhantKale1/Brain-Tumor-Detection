@@ -103,7 +103,7 @@
           const imageEl = document.getElementById("gradcam-image");
 
           try {
-            const response = await fetch(`/gradcam?image={{ gradcam_source|urlencode }}`);
+            const response = await fetch('/gradcam?image={{ gradcam_source|urlencode }}{% if pred_index is not none %}&pred_index={{ pred_index }}{% endif %}');
             const payload = await response.json();
 
             if (!response.ok || !payload.ok) {

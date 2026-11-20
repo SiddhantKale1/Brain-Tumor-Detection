@@ -88,8 +88,9 @@ def make_gradcam_heatmap(
     pred_index: Optional[int] = None,
 ) -> np.ndarray:
     """
-    Returns a heatmap in [0,1] with shape (H, W).
+    Generates a Grad-CAM heatmap normalized to [0, 1] with shape (H, W).
     Expects img_array shape (1, H, W, 3).
+    If pred_index is None, defaults to the argmax predicted class.
     """
     preprocess_input_model, conv_output_model, classifier_model = _build_gradcam_models(
         model,
@@ -102,16 +103,26 @@ def make_gradcam_heatmap(
         tape.watch(conv_outputs)
         predictions = classifier_model(base_outputs, training=False)
         if pred_index is None:
-            pred_index = tf.argmax(predictions[0])
+            pred_index = int(tf.argmax(predictions[0]))
         class_channel = predictions[:, pred_index]
 
     grads = tape.gradient(class_channel, conv_outputs)
+    if grads is None:
+        return np.zeros(conv_outputs.shape[1:3], dtype=np.float32)
+
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
     conv_outputs = conv_outputs[0]
 
     heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
     heatmap = tf.squeeze(heatmap)
-    heatmap = tf.maximum(heatmap, 0) / (tf.reduce_max(heatmap) + 1e-8)
+    heatmap = tf.maximum(heatmap, 0)
+
+    max_val = tf.reduce_max(heatmap)
+    if max_val > 0:
+        heatmap = heatmap / max_val
+    else:
+        heatmap = tf.zeros_like(heatmap)
+
     return heatmap.numpy()
 
 
@@ -124,7 +135,7 @@ def overlay_heatmap_on_bgr(
 ) -> np.ndarray:
     h, w = image_bgr.shape[:2]
     heatmap_resized = cv2.resize(heatmap, (w, h))
-    heatmap_uint8 = np.uint8(255 * heatmap_resized)
+    heatmap_uint8 = np.uint8(255 * np.clip(heatmap_resized, 0, 1))
     heatmap_color = cv2.applyColorMap(heatmap_uint8, colormap)
     overlay = cv2.addWeighted(image_bgr, 1.0 - alpha, heatmap_color, alpha, 0)
     return overlay
@@ -145,6 +156,5 @@ def save_gradcam_overlay(
     overlay = overlay_heatmap_on_bgr(image_bgr, heatmap)
     ok = cv2.imwrite(out_path, overlay)
     if not ok:
-        raise RuntimeError("Failed to write Grad-CAM output image.")
+        raise RuntimeError(f"Failed to write Grad-CAM output image to '{out_path}'.")
     return out_path, filename
-

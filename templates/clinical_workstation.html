@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroScan Clinical AI™ | PACS Diagnostic Workstation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            pacs: {
+              bg: '#080C14',
+              surface: '#0F172A',
+              card: '#131F37',
+              border: '#1E293B',
+              accent: '#0891B2',
+              cyan: '#06B6D4',
+              teal: '#14B8A6',
+              alert: '#EF4444',
+              warning: '#F59E0B',
+              success: '#10B981',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom crosshair cursor for medical viewport */
+    .viewport-canvas {
+      cursor: crosshair;
+    }
+    /* Hide scrollbars in toolbars */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-pacs-bg text-slate-100 font-sans min-h-screen flex flex-col antialiased selection:bg-pacs-accent selection:text-white">
+
+  <!-- Top Navigation & Clinical Header -->
+  <header class="bg-pacs-surface border-b border-pacs-border px-5 py-3 sticky top-0 z-50 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <a href="/" class="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-900 border border-pacs-border hover:border-slate-700 transition mr-1 font-medium">
+        <span>←</span>
+        <span>Back to Overview</span>
+      </a>
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-pacs-accent to-pacs-cyan flex items-center justify-center shadow-lg shadow-pacs-accent/20">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-base font-bold tracking-tight text-white font-serif">NeuroScan PACS</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-pacs-accent/20 text-pacs-cyan border border-pacs-accent/40 font-mono font-medium">Workstation v2.4</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            HIPAA De-Identified
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Quantitative Neuro-Oncology Diagnostic Decision Support System</p>
+      </div>
+    </div>
+
+    <!-- Quick Demo Selector & Upload Controls -->
+    <div class="flex items-center flex-wrap gap-2">
+      <span class="text-xs font-mono text-slate-400 uppercase tracking-wider hidden lg:inline">Clinical Demos:</span>
+      <div class="flex items-center bg-slate-900/80 p-1 rounded-lg border border-pacs-border gap-1">
+        <button onclick="loadDemoCase('case_01_glioma')" class="demo-btn px-2.5 py-1 text-xs rounded hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer font-medium" data-id="case_01_glioma">
+          Case 1: Glioma (3.0T)
+        </button>
+        <button onclick="loadDemoCase('case_02_meningioma')" class="demo-btn px-2.5 py-1 text-xs rounded hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer font-medium" data-id="case_02_meningioma">
+          Case 2: Meningioma
+        </button>
+        <button onclick="loadDemoCase('case_03_pituitary')" class="demo-btn px-2.5 py-1 text-xs rounded hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer font-medium" data-id="case_03_pituitary">
+          Case 3: Pituitary
+        </button>
+        <button onclick="loadDemoCase('case_04_normal')" class="demo-btn px-2.5 py-1 text-xs rounded hover:bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer font-medium" data-id="case_04_normal">
+          Case 4: Control (Normal)
+        </button>
+      </div>
+
+      <label class="cursor-pointer bg-pacs-accent hover:bg-cyan-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span>Upload DICOM / MRI</span>
+        <input type="file" id="mri-file-input" class="hidden" accept=".dcm,.dicom,.jpg,.jpeg,.png">
+      </label>
+
+      <a href="/detect" class="text-xs text-slate-400 hover:text-slate-200 underline px-2 py-1">Legacy View</a>
+    </div>
+  </header>
+
+  <!-- Main Workstation Layout -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden">
+
+    <!-- LEFT COLUMN: PACS Viewport & Diagnostic Imaging Tools (7 cols) -->
+    <section class="lg:col-span-7 bg-pacs-bg border-r border-pacs-border flex flex-col min-h-[600px] relative">
+      
+      <!-- Viewport Tool Bar -->
+      <div class="bg-pacs-surface border-b border-pacs-border px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <!-- View Mode Layers -->
+        <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-md border border-pacs-border">
+          <button id="btn-layer-seg" onclick="switchLayer('segmentation')" class="px-2.5 py-1 rounded bg-pacs-accent text-white font-medium shadow-sm transition">
+            Segmentation (Core/Edema)
+          </button>
+          <button id="btn-layer-cam" onclick="switchLayer('heatmap')" class="px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition">
+            Grad-CAM Heatmap
+          </button>
+          <button id="btn-layer-raw" onclick="switchLayer('raw')" class="px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition">
+            Raw Grayscale MRI
+          </button>
+        </div>
+
+        <!-- Windowing Presets (HU / Contrast) -->
+        <div class="flex items-center gap-1">
+          <span class="text-slate-400 font-mono mr-1">Window:</span>
+          <button onclick="setWindowPreset('brain')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition">Brain</button>
+          <button onclick="setWindowPreset('subdural')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition">Subdural</button>
+          <button onclick="setWindowPreset('high')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono transition">High Contrast</button>
+          <button onclick="resetViewport()" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition">Reset</button>
+        </div>
+
+        <!-- Measurement Tools -->
+        <div class="flex items-center gap-2">
+          <button id="btn-caliper" onclick="toggleCaliper()" class="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition">
+            <svg class="w-3.5 h-3.5 text-pacs-cyan" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span id="caliper-status">Caliper (Off)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Medical Canvas Viewport -->
+      <div class="flex-1 flex items-center justify-center p-4 relative bg-[#04070D] overflow-hidden select-none" id="viewport-container">
+        
+        <!-- Orientation Markers (Anatomical Standard: Axial) -->
+        <div class="absolute top-6 left-1/2 -translate-x-1/2 text-xs font-mono font-bold text-slate-400/80 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 pointer-events-none">A (Anterior)</div>
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs font-mono font-bold text-slate-400/80 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 pointer-events-none">P (Posterior)</div>
+        <div class="absolute top-1/2 left-6 -translate-y-1/2 text-xs font-mono font-bold text-slate-400/80 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 pointer-events-none">R (Patient Right)</div>
+        <div class="absolute top-1/2 right-6 -translate-y-1/2 text-xs font-mono font-bold text-slate-400/80 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800/80 pointer-events-none">L (Patient Left)</div>
+
+        <!-- DICOM HUD Overlay (Top-Left) -->
+        <div class="absolute top-6 left-6 font-mono text-[11px] leading-relaxed text-cyan-400/90 pointer-events-none drop-shadow">
+          <div id="hud-patient-id" class="font-bold text-white">ANON-MR-2026-X812</div>
+          <div id="hud-series">Axial T1+C (Gadolinium)</div>
+          <div id="hud-scanner">SIEMENS MAGNETOM 3.0T</div>
+          <div id="hud-tech">TR: 680ms | TE: 12ms | SL: 2.5mm</div>
+        </div>
+
+        <!-- DICOM HUD Overlay (Bottom-Right) -->
+        <div class="absolute bottom-6 right-6 font-mono text-[11px] leading-relaxed text-slate-400 text-right pointer-events-none drop-shadow">
+          <div id="hud-zoom">Zoom: 100%</div>
+          <div id="hud-window">WW: 120 / WL: 50</div>
+          <div id="hud-matrix">Matrix: 512 × 512</div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="viewport-loader" class="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center z-30 transition-opacity hidden">
+          <div class="w-12 h-12 border-4 border-pacs-accent/30 border-t-pacs-cyan rounded-full animate-spin mb-3"></div>
+          <p class="text-sm font-mono text-cyan-300">Processing Multi-Sequence Volumetric Tensor...</p>
+        </div>
+
+        <!-- Interactive Canvas -->
+        <div id="canvas-wrapper" class="relative max-w-full max-h-full flex items-center justify-center transition-transform duration-75">
+          <img id="mri-image" src="" alt="Clinical MRI Viewport" class="max-w-[480px] max-h-[480px] object-contain rounded border border-slate-800 shadow-2xl transition duration-150">
+          <canvas id="caliper-canvas" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+        </div>
+
+        <!-- Interactive Caliper Measurement Tool Readout -->
+        <div id="caliper-readout" class="absolute bottom-16 left-6 bg-slate-900/90 border border-pacs-cyan/40 px-3 py-1.5 rounded text-xs font-mono text-pacs-cyan shadow-lg hidden">
+          Measured Distance: <span id="caliper-distance" class="font-bold text-white">0.0 mm</span>
+        </div>
+      </div>
+
+      <!-- Viewport Bottom Controls Bar (Sliders & Zoom) -->
+      <div class="bg-pacs-surface border-t border-pacs-border px-4 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div class="flex items-center gap-3">
+          <span class="text-slate-400 font-mono">Contrast:</span>
+          <input type="range" id="contrast-slider" min="50" max="200" value="100" class="w-24 accent-pacs-accent" oninput="applyImageFilters()">
+          <span class="text-slate-400 font-mono ml-2">Brightness:</span>
+          <input type="range" id="brightness-slider" min="50" max="180" value="100" class="w-24 accent-pacs-accent" oninput="applyImageFilters()">
+        </div>
+
+        <div class="flex items-center gap-3 font-mono">
+          <span class="text-slate-400">Zoom:</span>
+          <button onclick="adjustZoom(-0.15)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white">-</button>
+          <span id="zoom-indicator" class="w-12 text-center text-slate-300">100%</span>
+          <button onclick="adjustZoom(0.15)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-white">+</button>
+        </div>
+
+        <!-- Legend for Segmentation Layers -->
+        <div class="flex items-center gap-4 text-xs font-medium">
+          <span class="flex items-center gap-1.5 text-red-400">
+            <span class="w-3 h-3 rounded bg-red-600/80 border border-red-400"></span> Enhancing Core
+          </span>
+          <span class="flex items-center gap-1.5 text-yellow-300">
+            <span class="w-3 h-3 rounded bg-yellow-400/80 border border-yellow-200"></span> Peritumoral Edema
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Clinical Decision Support Intelligence & Report (5 cols) -->
+    <section class="lg:col-span-5 bg-pacs-surface flex flex-col overflow-y-auto no-scrollbar max-h-screen">
+      
+      <!-- Triage Priority Alert Banner -->
+      <div id="triage-banner" class="px-5 py-3 border-b border-pacs-border bg-red-950/40 border-l-4 border-l-red-500 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div id="triage-icon" class="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
+          <div>
+            <div id="triage-title" class="text-xs font-mono font-bold tracking-wider text-red-400 uppercase">CRITICAL — URGENT ONCOLOGY TRIAGE</div>
+            <div id="triage-sub" class="text-[11px] text-slate-300">Acute Mass Effect & Infiltrative Margins Detected</div>
+          </div>
+        </div>
+        <span id="triage-tag" class="text-[10px] font-mono px-2 py-0.5 rounded bg-red-900/60 text-red-200 border border-red-700">LEVEL 1</span>
+      </div>
+
+      <div class="p-5 space-y-5 flex-1">
+        
+        <!-- Primary AI Diagnosis Card -->
+        <div class="bg-pacs-card rounded-xl p-4 border border-pacs-border shadow-sm">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1">Primary Diagnostic Impression</div>
+          <div class="flex items-baseline justify-between gap-2">
+            <h2 id="diag-name" class="text-xl font-extrabold text-white tracking-tight">Glioma (Intra-axial)</h2>
+            <div class="text-right">
+              <span id="diag-confidence" class="text-2xl font-bold font-mono text-pacs-cyan">99.8%</span>
+              <span class="text-xs text-slate-400 block font-mono">Confidence</span>
+            </div>
+          </div>
+
+          <!-- Shannon Uncertainty Bar -->
+          <div class="mt-3 pt-3 border-t border-slate-800">
+            <div class="flex justify-between items-center text-xs mb-1">
+              <span class="text-slate-400 font-mono">Statistical Uncertainty:</span>
+              <span id="diag-uncertainty-tier" class="font-mono text-emerald-400 font-medium">Low (0.012) — High Certainty</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+              <div id="uncertainty-bar" class="bg-emerald-400 h-1.5 rounded-full" style="width: 5%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHO CNS Histological Grade & Radiogenomic Profile Card -->
+        <div class="bg-pacs-card rounded-xl p-4 border border-pacs-border">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>WHO CNS Grade & Radiogenomics</span>
+            <span id="who-grade-pill" class="px-2 py-0.5 rounded font-mono text-[10px] bg-red-900/60 text-red-200 border border-red-700">WHO GRADE IV</span>
+          </div>
+
+          <!-- Staging / Malignancy Meter -->
+          <div class="mb-3">
+            <div class="flex justify-between items-center text-xs font-mono mb-1">
+              <span class="text-slate-400">Malignancy Tier:</span>
+              <span id="malignancy-tier-text" class="text-red-400 font-bold">High-Grade Malignant (Aggressive)</span>
+            </div>
+            <div class="grid grid-cols-4 gap-1.5 h-1.5 rounded-full overflow-hidden bg-slate-900">
+              <div id="grade-bar-1" class="bg-emerald-500 rounded-l"></div>
+              <div id="grade-bar-2" class="bg-blue-500"></div>
+              <div id="grade-bar-3" class="bg-amber-500"></div>
+              <div id="grade-bar-4" class="bg-red-500 rounded-r"></div>
+            </div>
+            <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1">
+              <span>Grade I (Benign)</span>
+              <span>Grade II (LGG)</span>
+              <span>Grade III (HGG)</span>
+              <span>Grade IV (GBM)</span>
+            </div>
+          </div>
+
+          <!-- Molecular Markers Grid -->
+          <div class="grid grid-cols-2 gap-2 text-xs font-mono pt-2 border-t border-slate-800">
+            <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400">IDH Mutation Status</div>
+              <div id="metric-idh" class="text-xs font-bold text-red-300 mt-0.5">IDH-Wildtype (High Risk)</div>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400">MGMT Promoter Status</div>
+              <div id="metric-mgmt" class="text-xs font-bold text-emerald-300 mt-0.5">Likely Methylated</div>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400">Necrotic Core Burden</div>
+              <div id="metric-necrotic-vol" class="text-xs font-bold text-slate-200 mt-0.5">14.2 cm³ (21.2%)</div>
+            </div>
+            <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+              <div class="text-[10px] text-slate-400">Oncological Care Pathway</div>
+              <div id="metric-pathway" class="text-[11px] font-bold text-cyan-300 mt-0.5">Stupp Chemoradiation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quantitative Volumetric & Spatial Quantification -->
+        <div class="bg-pacs-card rounded-xl p-4 border border-pacs-border">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+            <span>Volumetric Quantification</span>
+            <span class="text-cyan-400 text-[11px] font-mono">Calibrated 3D Slabs</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-900/70 p-3 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">Total Tumor Volume</div>
+              <div id="metric-total-vol" class="text-lg font-bold font-mono text-white mt-0.5">66.89 cm³</div>
+              <div class="text-[10px] text-slate-500 font-mono mt-0.5">Ellipsoidal 3D Slab Model</div>
+            </div>
+
+            <div class="bg-slate-900/70 p-3 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-slate-400">Max Diameter (D1)</div>
+              <div id="metric-max-diam" class="text-lg font-bold font-mono text-white mt-0.5">38.4 mm</div>
+              <div id="metric-perp-diam" class="text-[10px] text-slate-500 font-mono mt-0.5">D2: 32.1 mm orthogonal</div>
+            </div>
+
+            <div class="bg-slate-900/70 p-3 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-red-300">Enhancing Core (ET)</div>
+              <div id="metric-core-vol" class="text-base font-bold font-mono text-red-400 mt-0.5">50.97 cm³</div>
+              <div class="text-[10px] text-slate-500 font-mono mt-0.5">High-contrast solid tissue</div>
+            </div>
+
+            <div class="bg-slate-900/70 p-3 rounded-lg border border-slate-800/80">
+              <div class="text-[11px] text-yellow-300">Peritumoral Edema (ED)</div>
+              <div id="metric-edema-vol" class="text-base font-bold font-mono text-yellow-400 mt-0.5">39.61 cm³</div>
+              <div class="text-[10px] text-slate-500 font-mono mt-0.5">Infiltrative vasogenic halo</div>
+            </div>
+          </div>
+
+          <!-- Anatomical Localization Details -->
+          <div class="mt-3 pt-3 border-t border-slate-800/80 text-xs space-y-1.5 font-mono">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Anatomical Lobe:</span>
+              <span id="metric-region" class="text-slate-200">Temporoparietal</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Hemisphere Distribution:</span>
+              <span id="metric-hemisphere" class="text-slate-200">Left Cerebral Hemisphere</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Midline Shift / Mass Effect:</span>
+              <span id="metric-midline-shift" class="text-amber-400 font-bold">4.2 mm (Moderate)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Class Probability Distribution Breakdown -->
+        <div class="bg-pacs-card rounded-xl p-4 border border-pacs-border">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2.5">Softmax Class Probabilities</div>
+          <div class="space-y-2 text-xs font-mono" id="prob-bars">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- WHO Guidelines & Clinical Narrative -->
+        <div class="bg-pacs-card rounded-xl p-4 border border-pacs-border">
+          <div class="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">WHO CNS Clinical Guideline</div>
+          <p id="who-guideline-text" class="text-xs leading-relaxed text-slate-300">
+            WHO CNS Grade II–IV (Diffuse Astrocytic / Oligodendroglial spectrum suspected). Urgent neurosurgical oncology evaluation recommended.
+          </p>
+        </div>
+
+        <!-- DICOM Metadata Inspector Accordion -->
+        <details class="bg-pacs-card rounded-xl border border-pacs-border p-3 text-xs group">
+          <summary class="font-mono text-slate-400 hover:text-slate-200 cursor-pointer flex items-center justify-between font-medium">
+            <span>DICOM Header Metadata (HIPAA Verified)</span>
+            <span class="text-pacs-cyan transition group-open:rotate-180">▼</span>
+          </summary>
+          <div class="mt-3 pt-2 border-t border-slate-800 font-mono text-[11px] space-y-1 text-slate-300" id="dicom-metadata-table">
+            <!-- Dynamically populated -->
+          </div>
+        </details>
+
+        <!-- Actions / Export Structured Report -->
+        <div class="pt-2 flex flex-col gap-2">
+          <button onclick="downloadPdfReport()" class="w-full bg-gradient-to-r from-pacs-accent to-cyan-600 hover:from-cyan-600 hover:to-teal-600 text-white font-semibold py-2.5 px-4 rounded-xl shadow-lg shadow-pacs-accent/20 flex items-center justify-center gap-2 transition cursor-pointer text-sm">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export Structured Diagnostic Report (PDF)</span>
+          </button>
+          
+          <p class="text-[10px] text-slate-500 text-center leading-normal">
+            Investigational Medical Device Exemption (FDA SaMD Tier 2). For clinical research and licensed practitioner decision support only.
+          </p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Client-Side Workstation Application Script -->
+  <script>
+    // State management
+    let currentData = null;
+    let currentLayer = 'segmentation'; // 'segmentation', 'heatmap', 'raw'
+    let zoomLevel = 1.0;
+    let caliperActive = false;
+    let caliperPoints = [];
+    let pixelSpacingMm = 0.65; // default mm per pixel
+
+    const mriImg = document.getElementById('mri-image');
+    const caliperCanvas = document.getElementById('caliper-canvas');
+    const ctx = caliperCanvas.getContext('2d');
+
+    // On Load: Auto-load Case from URL parameter if present, else Case 01
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialCase = urlParams.get('case') || 'case_01_glioma';
+      loadDemoCase(initialCase);
+      setupCaliper();
+    });
+
+    // File Input Listener
+    document.getElementById('mri-file-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      showLoader(true);
+      try {
+        const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.ok) {
+          updateWorkstation(data);
+        } else {
+          alert('Analysis Error: ' + (data.error || 'Failed to process scan'));
+        }
+      } catch (err) {
+        alert('Network or server error during upload: ' + err.message);
+      } finally {
+        showLoader(false);
+      }
+    });
+
+    // Load Demo Case via API
+    async function loadDemoCase(caseId) {
+      // Highlight active button
+      document.querySelectorAll('.demo-btn').forEach(btn => {
+        if (btn.dataset.id === caseId) {
+          btn.classList.add('bg-pacs-accent', 'text-white');
+          btn.classList.remove('text-slate-300');
+        } else {
+          btn.classList.remove('bg-pacs-accent', 'text-white');
+          btn.classList.add('text-slate-300');
+        }
+      });
+
+      showLoader(true);
+      try {
+        const res = await fetch(`/api/analyze?demo=${caseId}`);
+        const data = await res.json();
+        if (data.ok) {
+          updateWorkstation(data);
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Failed to load demo case: ' + err.message);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    // Update Workstation with API payload
+    function updateWorkstation(data) {
+      currentData = data;
+      const m = data.metrics;
+      const meta = data.metadata;
+
+      // Extract pixel spacing for millimeter measurements
+      if (meta.pixel_spacing) {
+        const parts = meta.pixel_spacing.split('×');
+        if (parts.length > 0) pixelSpacingMm = parseFloat(parts[0]) || 0.65;
+      }
+
+      // HUD Update
+      document.getElementById('hud-patient-id').textContent = meta.patient_id || 'ANON-MR-XXXX';
+      document.getElementById('hud-series').textContent = meta.series_description || 'Axial Brain T1';
+      document.getElementById('hud-scanner').textContent = `${meta.manufacturer} ${meta.model_name}`;
+      document.getElementById('hud-tech').textContent = `TR: ${meta.repetition_time} | TE: ${meta.echo_time} | SL: ${meta.slice_thickness}`;
+      document.getElementById('hud-matrix').textContent = `Resolution: ${meta.is_native_dicom ? 'Native DICOM' : 'Calibrated Import'}`;
+
+      // Viewport Image Update
+      switchLayer(currentLayer);
+
+      // Triage Banner Update
+      const triageBanner = document.getElementById('triage-banner');
+      const triageIcon = document.getElementById('triage-icon');
+      const triageTitle = document.getElementById('triage-title');
+      const triageSub = document.getElementById('triage-sub');
+      const triageTag = document.getElementById('triage-tag');
+
+      if (m.triage_tier === 'CRITICAL_URGENT') {
+        triageBanner.className = 'px-5 py-3 border-b border-pacs-border bg-red-950/40 border-l-4 border-l-red-500 flex items-center justify-between';
+        triageIcon.className = 'w-3 h-3 rounded-full bg-red-500 animate-ping';
+        triageTitle.className = 'text-xs font-mono font-bold tracking-wider text-red-400 uppercase';
+        triageTitle.textContent = 'CRITICAL — IMMEDIATE ONCOLOGY TRIAGE';
+        triageSub.textContent = 'Significant Mass Effect or Infiltrative Edema';
+        triageTag.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-red-900/60 text-red-200 border border-red-700';
+        triageTag.textContent = 'URGENT TIER 1';
+      } else if (m.triage_tier === 'URGENT') {
+        triageBanner.className = 'px-5 py-3 border-b border-pacs-border bg-amber-950/40 border-l-4 border-l-amber-500 flex items-center justify-between';
+        triageIcon.className = 'w-3 h-3 rounded-full bg-amber-500';
+        triageTitle.className = 'text-xs font-mono font-bold tracking-wider text-amber-400 uppercase';
+        triageTitle.textContent = 'PRIORITY — EXPEDITED CLINICAL REVIEW';
+        triageSub.textContent = 'Focal Intracranial Mass Lesion Confirmed';
+        triageTag.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-900/60 text-amber-200 border border-amber-700';
+        triageTag.textContent = 'PRIORITY TIER 2';
+      } else {
+        triageBanner.className = 'px-5 py-3 border-b border-pacs-border bg-emerald-950/40 border-l-4 border-l-emerald-500 flex items-center justify-between';
+        triageIcon.className = 'w-3 h-3 rounded-full bg-emerald-500';
+        triageTitle.className = 'text-xs font-mono font-bold tracking-wider text-emerald-400 uppercase';
+        triageTitle.textContent = 'UNREMARKABLE / NEGATIVE';
+        triageSub.textContent = 'No acute mass lesion or pathological enhancement';
+        triageTag.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-200 border border-emerald-700';
+        triageTag.textContent = 'ROUTINE';
+      }
+
+      // Diagnosis Card
+      document.getElementById('diag-name').textContent = m.primary_display;
+      document.getElementById('diag-confidence').textContent = `${m.confidence_pct}%`;
+      document.getElementById('diag-uncertainty-tier').textContent = `${m.uncertainty_tier} (${m.uncertainty_score})`;
+      document.getElementById('uncertainty-bar').style.width = `${Math.min(m.uncertainty_score * 100, 100)}%`;
+
+      // WHO Staging & Radiogenomics Card
+      document.getElementById('who-grade-pill').textContent = m.who_grade;
+      document.getElementById('malignancy-tier-text').textContent = m.malignancy_level;
+      
+      const gNum = m.who_grade_num || 0;
+      document.getElementById('grade-bar-1').className = gNum >= 1 ? 'bg-emerald-500 rounded-l' : 'bg-slate-800 rounded-l';
+      document.getElementById('grade-bar-2').className = gNum >= 2 ? 'bg-blue-500' : 'bg-slate-800';
+      document.getElementById('grade-bar-3').className = gNum >= 3 ? 'bg-amber-500' : 'bg-slate-800';
+      document.getElementById('grade-bar-4').className = gNum >= 4 ? 'bg-red-500 rounded-r' : 'bg-slate-800 rounded-r';
+
+      document.getElementById('metric-idh').textContent = m.idh_mutation_likelihood;
+      document.getElementById('metric-mgmt').textContent = m.mgmt_methylation_status;
+      document.getElementById('metric-necrotic-vol').textContent = `${m.necrotic_volume_cm3} cm³ (${m.necrosis_ratio_pct}%)`;
+      document.getElementById('metric-pathway').textContent = (m.recommended_protocol || '').split(':')[0] || 'Standard Surveillance';
+
+      // Metrics
+      document.getElementById('metric-total-vol').textContent = `${m.tumor_volume_cm3} cm³`;
+      document.getElementById('metric-max-diam').textContent = `${m.max_diameter_mm} mm`;
+      document.getElementById('metric-perp-diam').textContent = `D2: ${m.perpendicular_diameter_mm} mm orthogonal`;
+      document.getElementById('metric-core-vol').textContent = `${m.enhancing_core_volume_cm3} cm³`;
+      document.getElementById('metric-edema-vol').textContent = `${m.edema_volume_cm3} cm³`;
+      document.getElementById('metric-region').textContent = m.region;
+      document.getElementById('metric-hemisphere').textContent = m.hemisphere;
+      document.getElementById('metric-midline-shift').textContent = m.midline_shift_mm > 0 ? `${m.midline_shift_mm} mm (Significant)` : 'None (< 1mm)';
+
+      // Probability Bars
+      const probContainer = document.getElementById('prob-bars');
+      probContainer.innerHTML = '';
+      for (const [cls, val] of Object.entries(m.probabilities)) {
+        const isSelected = cls === m.primary_class;
+        const color = isSelected ? 'bg-pacs-cyan text-cyan-300 font-bold' : 'bg-slate-700 text-slate-400';
+        probContainer.innerHTML += `
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="${isSelected ? 'text-white font-semibold' : 'text-slate-400'} capitalize">${cls}</span>
+              <span class="${isSelected ? 'text-pacs-cyan font-bold' : 'text-slate-400'}">${val.toFixed(1)}%</span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+              <div class="${color} h-1.5 rounded-full" style="width: ${val}%"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // WHO Guideline
+      document.getElementById('who-guideline-text').textContent = m.who_guidance;
+
+      // DICOM Metadata Table
+      const metaContainer = document.getElementById('dicom-metadata-table');
+      metaContainer.innerHTML = '';
+      for (const [k, v] of Object.entries(meta)) {
+        metaContainer.innerHTML += `
+          <div class="flex justify-between py-0.5 border-b border-slate-900">
+            <span class="text-slate-400">${k.replace(/_/g, ' ').toUpperCase()}:</span>
+            <span class="text-slate-200">${v}</span>
+          </div>
+        `;
+      }
+
+      // Reset caliper
+      clearCaliper();
+    }
+
+    // Switch Viewport Layer (Segmentation, Heatmap, Raw)
+    function switchLayer(layer) {
+      currentLayer = layer;
+      if (!currentData || !currentData.visuals) return;
+
+      // Update button styling
+      const btns = {
+        'segmentation': document.getElementById('btn-layer-seg'),
+        'heatmap': document.getElementById('btn-layer-cam'),
+        'raw': document.getElementById('btn-layer-raw')
+      };
+
+      for (const [k, btn] of Object.entries(btns)) {
+        if (k === layer) {
+          btn.className = 'px-2.5 py-1 rounded bg-pacs-accent text-white font-medium shadow-sm transition';
+        } else {
+          btn.className = 'px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 transition';
+        }
+      }
+
+      // Set image source
+      mriImg.src = currentData.visuals[layer];
+      syncCanvasSize();
+    }
+
+    // Image Filters & Presets
+    function setWindowPreset(preset) {
+      const contrast = document.getElementById('contrast-slider');
+      const brightness = document.getElementById('brightness-slider');
+      const hudWin = document.getElementById('hud-window');
+
+      if (preset === 'brain') {
+        contrast.value = 110;
+        brightness.value = 100;
+        hudWin.textContent = 'WW: 80 / WL: 40 (Brain)';
+      } else if (preset === 'subdural') {
+        contrast.value = 150;
+        brightness.value = 85;
+        hudWin.textContent = 'WW: 200 / WL: 75 (Subdural)';
+      } else if (preset === 'high') {
+        contrast.value = 180;
+        brightness.value = 110;
+        hudWin.textContent = 'WW: 60 / WL: 30 (High Con)';
+      }
+      applyImageFilters();
+    }
+
+    function applyImageFilters() {
+      const c = document.getElementById('contrast-slider').value;
+      const b = document.getElementById('brightness-slider').value;
+      mriImg.style.filter = `contrast(${c}%) brightness(${b}%)`;
+    }
+
+    function resetViewport() {
+      zoomLevel = 1.0;
+      updateZoom();
+      document.getElementById('contrast-slider').value = 100;
+      document.getElementById('brightness-slider').value = 100;
+      document.getElementById('hud-window').textContent = 'WW: 120 / WL: 50';
+      applyImageFilters();
+      clearCaliper();
+    }
+
+    function adjustZoom(delta) {
+      zoomLevel = Math.max(0.6, Math.min(2.5, zoomLevel + delta));
+      updateZoom();
+    }
+
+    function updateZoom() {
+      document.getElementById('canvas-wrapper').style.transform = `scale(${zoomLevel})`;
+      document.getElementById('zoom-indicator').textContent = `${Math.round(zoomLevel * 100)}%`;
+      document.getElementById('hud-zoom').textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+    }
+
+    // Caliper Measuring Tool
+    function toggleCaliper() {
+      caliperActive = !caliperActive;
+      const btn = document.getElementById('btn-caliper');
+      const status = document.getElementById('caliper-status');
+      const readout = document.getElementById('caliper-readout');
+
+      if (caliperActive) {
+        btn.classList.add('bg-pacs-cyan', 'text-slate-950', 'font-bold');
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+        status.textContent = 'Caliper (Active: Click 2 pts)';
+        caliperCanvas.classList.remove('pointer-events-none');
+        caliperCanvas.style.cursor = 'crosshair';
+        readout.classList.remove('hidden');
+      } else {
+        btn.classList.remove('bg-pacs-cyan', 'text-slate-950', 'font-bold');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+        status.textContent = 'Caliper (Off)';
+        caliperCanvas.classList.add('pointer-events-none');
+        clearCaliper();
+      }
+    }
+
+    function setupCaliper() {
+      caliperCanvas.addEventListener('click', (e) => {
+        if (!caliperActive) return;
+        const rect = caliperCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        caliperPoints.push({ x, y });
+
+        if (caliperPoints.length === 1) {
+          drawCaliperPoint(x, y);
+        } else if (caliperPoints.length === 2) {
+          drawCaliperLine(caliperPoints[0], caliperPoints[1]);
+          caliperPoints = []; // reset for next measurement
+        }
+      });
+    }
+
+    function drawCaliperPoint(x, y) {
+      ctx.clearRect(0, 0, caliperCanvas.width, caliperCanvas.height);
+      ctx.fillStyle = '#06B6D4';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+
+    function drawCaliperLine(p1, p2) {
+      ctx.clearRect(0, 0, caliperCanvas.width, caliperCanvas.height);
+      ctx.strokeStyle = '#06B6D4';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+
+      // End caps
+      ctx.fillStyle = '#06B6D4';
+      ctx.beginPath();
+      ctx.arc(p1.x, p1.y, 4, 0, 2 * Math.PI);
+      ctx.arc(p2.x, p2.y, 4, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Calculate distance in pixels and convert to mm
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const pxDist = Math.sqrt(dx * dx + dy * dy);
+
+      // Scaling relative to original image dimensions
+      const scaleFactor = (mriImg.naturalWidth || 512) / mriImg.clientWidth;
+      const realPxDist = pxDist * scaleFactor;
+      const distMm = (realPxDist * pixelSpacingMm).toFixed(1);
+
+      document.getElementById('caliper-distance').textContent = `${distMm} mm`;
+
+      // Draw text label on canvas midpoint
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 12px "JetBrains Mono"';
+      ctx.fillText(`${distMm} mm`, midX + 8, midY - 8);
+    }
+
+    function clearCaliper() {
+      ctx.clearRect(0, 0, caliperCanvas.width, caliperCanvas.height);
+      caliperPoints = [];
+      document.getElementById('caliper-readout').classList.add('hidden');
+    }
+
+    function syncCanvasSize() {
+      caliperCanvas.width = mriImg.clientWidth || 480;
+      caliperCanvas.height = mriImg.clientHeight || 480;
+    }
+
+    mriImg.onload = syncCanvasSize;
+    window.addEventListener('resize', syncCanvasSize);
+
+    function showLoader(show) {
+      document.getElementById('viewport-loader').classList.toggle('hidden', !show);
+    }
+
+    // Download Official PDF Report
+    function downloadPdfReport() {
+      if (!currentData || !currentData.report_id) {
+        alert('Please select or upload a scan first.');
+        return;
+      }
+      window.open(`/api/export-report?id=${currentData.report_id}`, '_blank');
+    }
+  </script>
+</body>
+</html>

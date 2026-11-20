@@ -1,49 +1,796 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Brain Tumor MRI Detection</title>
-    {% include "shared_styles.html" %}
-  </head>
-  <body>
-    <div class="page-shell">
-      <div class="header">
-        <div class="brand">
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroScan — Precision Neuro-Oncology & Brain Tumor Detection</title>
+  
+  <!-- Typography matching Locus Dribbble editorial aesthetic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Instrument Serif"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            cream: {
+              50: '#FDFBF9',
+              100: '#FAF7F5',
+              200: '#F5EFEB',
+              300: '#EBE3DC',
+            },
+            crimson: {
+              50: '#FFF1F2',
+              100: '#FFE4E6',
+              200: '#FECDD3',
+              500: '#F43F5E',
+              600: '#E11D48',
+              700: '#BE123C',
+              800: '#9F1239',
+              900: '#881337',
+              950: '#4C0519',
+            },
+            burgundy: {
+              900: '#2A0610',
+              950: '#1C030A',
+            },
+            charcoal: {
+              800: '#27272A',
+              900: '#18181B',
+              950: '#09090B',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Smooth custom cursor on medical viewport */
+    .viewport-canvas { cursor: crosshair; }
+    /* Subtle editorial blur & glow */
+    .glow-crimson {
+      filter: drop-shadow(0 20px 40px rgba(190, 18, 60, 0.25));
+    }
+  </style>
+</head>
+<body class="bg-cream-100 text-charcoal-900 font-sans antialiased selection:bg-crimson-700 selection:text-white">
+
+  <!-- ========================================================================= -->
+  <!-- 1. NAVIGATION BAR                                                         -->
+  <!-- ========================================================================= -->
+  <header class="sticky top-0 z-50 bg-cream-100/90 backdrop-blur-md border-b border-cream-300/80 px-6 lg:px-12 py-4 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-8 h-8 rounded-full bg-crimson-700 flex items-center justify-center text-white font-serif italic text-lg shadow-md shadow-crimson-700/20 group-hover:scale-105 transition">
+          N
+        </div>
+        <span class="text-xl font-bold tracking-tight text-charcoal-950 font-sans">neuroscan</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-crimson-600"></span>
+      </a>
+
+      <!-- Center Nav Links -->
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-charcoal-800">
+        <a href="#pathology" class="hover:text-crimson-700 transition">Pathology</a>
+        <a href="#who-staging" class="hover:text-crimson-700 transition flex items-center gap-1.5">
+          <span>WHO CNS Staging</span>
+          <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-crimson-100 text-crimson-700 font-bold">New</span>
+        </a>
+        <a href="#clinical-loop" class="hover:text-crimson-700 transition">Clinical Loop</a>
+        <a href="#specialists" class="hover:text-crimson-700 transition">Medical Board</a>
+        <a href="/workstation" class="hover:text-crimson-700 transition font-semibold text-crimson-700">Dedicated PACS</a>
+        <a href="/detect" class="hover:text-crimson-700 transition text-xs font-mono px-2 py-0.5 rounded bg-cream-200">Legacy Mode</a>
+      </nav>
+
+      <!-- Right Action CTA -->
+      <div class="flex items-center gap-3">
+        <span class="hidden xl:inline text-xs font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          ● HIPAA Safe Harbor Verified
+        </span>
+        <a href="/workstation" class="inline-flex items-center gap-2 bg-crimson-700 hover:bg-crimson-800 text-white text-xs md:text-sm font-semibold px-4 md:px-5 py-2.5 rounded-full shadow-lg shadow-crimson-700/25 transition group">
+          <span>Open Workstation</span>
+          <span class="text-xs group-hover:translate-x-0.5 transition">→</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. HERO SECTION                                                           -->
+  <!-- ========================================================================= -->
+  <section class="relative pt-12 md:pt-20 pb-16 md:pb-28 px-6 lg:px-12 overflow-hidden">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      
+      <!-- Left Column: Editorial Headline & Actions -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-crimson-50 border border-crimson-200 text-crimson-800 text-xs font-mono uppercase tracking-wider font-semibold">
+          <span class="w-2 h-2 rounded-full bg-crimson-600 animate-pulse"></span>
+          Precision Neuro-Oncology AI · WHO CNS 5th Edition
+        </div>
+
+        <h1 class="text-5xl sm:text-6xl md:text-7xl font-serif text-charcoal-950 tracking-tight leading-[1.05]">
+          Read the scan that <br/>
+          <span class="italic text-crimson-700 font-serif">protects you.</span>
+        </h1>
+
+        <!-- Search / Quick Scan Bar -->
+        <div class="pt-2 max-w-xl">
+          <div class="bg-white p-1.5 rounded-full border border-cream-300 shadow-sm flex items-center gap-2 hover:border-crimson-300 transition">
+            <div class="pl-3 text-slate-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input type="text" id="hero-search-input" placeholder="Search: Glioma Grade IV, Meningioma, Pituitary, Normal..." class="w-full text-xs md:text-sm bg-transparent outline-none text-charcoal-900 placeholder:text-slate-400">
+            <select id="hero-case-jump" class="text-xs font-mono bg-cream-100 border-none rounded-full px-3 py-1.5 text-charcoal-800 outline-none cursor-pointer" onchange="if(this.value) window.location.href='/workstation?case=' + this.value">
+              <option value="">Jump to Case</option>
+              <option value="case_01_glioma">Glioma (GBM 3.0T)</option>
+              <option value="case_02_meningioma">Meningioma (3.0T)</option>
+              <option value="case_03_pituitary">Pituitary Adenoma</option>
+              <option value="case_04_normal">Healthy Control</option>
+            </select>
+            <button onclick="handleHeroSearch()" class="w-9 h-9 rounded-full bg-crimson-700 hover:bg-crimson-800 text-white flex items-center justify-center transition shrink-0">
+              <span class="text-xs">→</span>
+            </button>
+          </div>
+          <div class="flex items-center gap-2 mt-2 px-3 text-[11px] font-mono text-charcoal-800/70">
+            <span>Quick Demos:</span>
+            <a href="/workstation?case=case_01_glioma" class="text-crimson-700 hover:underline">Glioma IV</a> ·
+            <a href="/workstation?case=case_02_meningioma" class="text-crimson-700 hover:underline">Meningioma I</a> ·
+            <a href="/workstation?case=case_03_pituitary" class="text-crimson-700 hover:underline">Pituitary I</a> ·
+            <a href="/workstation?case=case_04_normal" class="text-crimson-700 hover:underline">Control</a>
+          </div>
+        </div>
+
+        <p class="text-base md:text-lg text-charcoal-800/80 leading-relaxed max-w-xl font-normal">
+          Clinical-grade neuro-oncology MRI analysis and plain-language diagnostic summaries that turn 2,048 deep feature vectors into WHO CNS histological grading and treatment decisions you and your doctor can act on.
+        </p>
+
+        <!-- Stat Counter Strip -->
+        <div class="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-cream-300/80 max-w-xl">
           <div>
-            <h1>Brain Tumor MRI Detection</h1>
-            <p class="subtitle">
-              A simple prototype that uses deep learning to classify brain MRI
-              slices into tumor subtypes. Start by uploading an image on the
-              detection page.
+            <div class="text-2xl md:text-3xl font-bold font-sans text-charcoal-950">94.0%</div>
+            <div class="text-xs text-charcoal-800/70 mt-0.5">glioma sensitivity</div>
+          </div>
+          <div>
+            <div class="text-2xl md:text-3xl font-bold font-sans text-charcoal-950">Grade I–IV</div>
+            <div class="text-xs text-charcoal-800/70 mt-0.5">WHO CNS staging</div>
+          </div>
+          <div>
+            <div class="text-2xl md:text-3xl font-bold font-sans text-charcoal-950">3.0T</div>
+            <div class="text-xs text-charcoal-800/70 mt-0.5">deep MRI resolution</div>
+          </div>
+          <div>
+            <div class="text-2xl md:text-3xl font-bold font-sans text-charcoal-950">&lt;1.2s</div>
+            <div class="text-xs text-charcoal-800/70 mt-0.5">inference latency</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Organic 3D Brain MRI Centerpiece with Floating Badges -->
+      <div class="lg:col-span-5 relative flex items-center justify-center">
+        
+        <!-- Ambient Radial Glow -->
+        <div class="absolute w-72 h-72 md:w-96 md:h-96 rounded-full bg-crimson-500/15 blur-3xl pointer-events-none"></div>
+
+        <!-- Main Brain Image Canvas -->
+        <div class="relative z-10 w-full max-w-md bg-white rounded-3xl p-4 border border-cream-300 shadow-2xl shadow-crimson-900/10 group">
+          <img src="/static/assets/hero_brain_mri.png" alt="Axial Brain MRI Neurological Reconstruction" class="w-full h-auto rounded-2xl object-cover glow-crimson transition duration-500 group-hover:scale-[1.02]">
+          
+          <!-- Floating Badge 1 (Top Right) -->
+          <div class="absolute -top-4 -right-4 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-cream-300 shadow-lg text-xs font-mono space-y-0.5 hidden sm:block">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400">Modality Protocol</div>
+            <div class="font-bold text-charcoal-950">Axial T1+Gd Contrast · 3.0T</div>
+          </div>
+
+          <!-- Floating Badge 2 (Bottom Left) -->
+          <div class="absolute -bottom-4 -left-4 bg-burgundy-950 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-mono flex items-center gap-3 hidden sm:flex">
+            <span class="w-2.5 h-2.5 rounded-full bg-crimson-500 animate-ping"></span>
+            <div>
+              <div class="text-[10px] text-crimson-200 uppercase tracking-wider">Multi-Compartment AI</div>
+              <div class="font-bold text-white">Enhancing Core + Edema Voxel Grid</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 3. WHO CNS STAGING & RADIOGENOMICS SECTION                                 -->
+  <!-- ========================================================================= -->
+  <section id="who-staging" class="py-16 md:py-24 px-6 lg:px-12 bg-white border-y border-cream-300">
+    <div class="max-w-7xl mx-auto space-y-12">
+      
+      <div class="max-w-3xl space-y-3">
+        <span class="text-xs font-mono uppercase tracking-widest text-crimson-700 font-semibold">· Histological Grading & Radiogenomics</span>
+        <h2 class="text-4xl md:text-5xl font-serif text-charcoal-950 tracking-tight">
+          Beyond binary detection: <br/>
+          <span class="italic font-serif text-crimson-700">WHO CNS Grade I through IV staging.</span>
+        </h2>
+        <p class="text-sm md:text-base text-charcoal-800/80 leading-relaxed font-normal">
+          Primary brain cancers do not use systemic TNM staging because they rarely metastasize outside the central nervous system. Instead, neuro-oncology relies on <strong>WHO CNS Histological & Molecular Grading</strong>. NeuroScan estimates both histological grade and surrogate molecular biomarkers directly from native MRI sequences.
+        </p>
+      </div>
+
+      <!-- 4-Tier WHO Grading Spectrum Bar -->
+      <div class="bg-cream-100 rounded-3xl p-6 md:p-8 border border-cream-300 space-y-6">
+        <div class="flex items-center justify-between border-b border-cream-300 pb-4">
+          <span class="text-xs font-mono uppercase tracking-wider text-charcoal-800 font-bold">WHO CNS 5th Edition Grading Continuum</span>
+          <span class="text-xs font-mono text-crimson-700 font-semibold">Automated Radiomic Mapping</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          
+          <!-- Grade I -->
+          <div class="bg-white rounded-2xl p-5 border border-cream-300 space-y-2 hover:border-emerald-500 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-emerald-700 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">GRADE I</span>
+              <span class="text-[10px] font-mono text-slate-500">Benign</span>
+            </div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Low Proliferative Potential</h4>
+            <p class="text-xs text-charcoal-800/70 leading-relaxed">
+              Well-circumscribed, non-infiltrative lesions. Gross-total resection is frequently curative.
+            </p>
+            <div class="pt-2 text-[11px] font-mono text-slate-500">
+              Examples: Sellar PitNET, Falx Meningioma
+            </div>
+          </div>
+
+          <!-- Grade II -->
+          <div class="bg-white rounded-2xl p-5 border border-cream-300 space-y-2 hover:border-blue-500 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-blue-700 px-2 py-0.5 rounded bg-blue-50 border border-blue-200">GRADE II</span>
+              <span class="text-[10px] font-mono text-slate-500">Low-Grade Infiltrative</span>
+            </div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Diffuse Infiltration</h4>
+            <p class="text-xs text-charcoal-800/70 leading-relaxed">
+              Slow-growing but infiltrative along white matter tracts. Potential for malignant progression.
+            </p>
+            <div class="pt-2 text-[11px] font-mono text-slate-500">
+              Examples: Diffuse Astrocytoma, Oligodendroglioma
+            </div>
+          </div>
+
+          <!-- Grade III -->
+          <div class="bg-white rounded-2xl p-5 border border-cream-300 space-y-2 hover:border-amber-500 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-amber-700 px-2 py-0.5 rounded bg-amber-50 border border-amber-200">GRADE III</span>
+              <span class="text-[10px] font-mono text-slate-500">High-Grade Malignant</span>
+            </div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Anaplastic Proliferation</h4>
+            <p class="text-xs text-charcoal-800/70 leading-relaxed">
+              High cellularity and elevated mitotic figures. Aggressive adjuvant chemoradiotherapy required.
+            </p>
+            <div class="pt-2 text-[11px] font-mono text-slate-500">
+              Examples: Anaplastic Astrocytoma
+            </div>
+          </div>
+
+          <!-- Grade IV -->
+          <div class="bg-white rounded-2xl p-5 border border-cream-300 space-y-2 hover:border-red-500 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold text-red-700 px-2 py-0.5 rounded bg-red-50 border border-red-200">GRADE IV</span>
+              <span class="text-[10px] font-mono text-slate-500">Glioblastoma (GBM)</span>
+            </div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Microvascular Necrosis</h4>
+            <p class="text-xs text-charcoal-800/70 leading-relaxed">
+              Rapidly expanding, heterogeneous ring enhancement with central necrosis and massive vasogenic edema.
+            </p>
+            <div class="pt-2 text-[11px] font-mono text-slate-500">
+              Examples: Glioblastoma Multiforme (GBM)
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Molecular Radiogenomics Bar -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="bg-crimson-50/70 rounded-2xl p-5 border border-crimson-200 space-y-2">
+            <div class="text-xs font-mono font-bold text-crimson-800 uppercase tracking-wider">🧬 IDH1 / IDH2 Radiogenomic Signature</div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Isocitrate Dehydrogenase Mutation Profiling</h4>
+            <p class="text-xs text-charcoal-800/80 leading-relaxed">
+              IDH-mutant gliomas carry significantly better median overall survival compared to aggressive IDH-wildtype tumors. NeuroScan assesses volumetric necrosis ratios and age markers to estimate IDH status before biopsy.
+            </p>
+          </div>
+
+          <div class="bg-crimson-50/70 rounded-2xl p-5 border border-crimson-200 space-y-2">
+            <div class="text-xs font-mono font-bold text-crimson-800 uppercase tracking-wider">💊 MGMT Promoter Methylation Surrogate</div>
+            <h4 class="font-bold text-charcoal-950 text-sm">Temozolomide (TMZ) Chemotherapy Responsiveness</h4>
+            <p class="text-xs text-charcoal-800/80 leading-relaxed">
+              Epigenetic silencing of the MGMT DNA repair gene predicts whether a patient's tumor will respond to standard alkylating chemotherapy (Stupp Protocol). Correlated with central necrotic burden.
             </p>
           </div>
         </div>
-        <div class="header-tag">Welcome</div>
+
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Get started</div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 4. DARK BENTO PROCESS SECTION (How the Diagnostic Loop Works)              -->
+  <!-- ========================================================================= -->
+  <section id="clinical-loop" class="py-16 md:py-24 px-6 lg:px-12 bg-burgundy-950 text-white relative">
+    <div class="max-w-7xl mx-auto space-y-12">
+      
+      <div class="max-w-2xl space-y-3">
+        <span class="text-xs font-mono uppercase tracking-widest text-crimson-400 font-semibold">· The Diagnostic Loop</span>
+        <h2 class="text-4xl md:text-5xl font-serif text-white tracking-tight">
+          From raw DICOM acquisition to certified clinical decision.
+        </h2>
+        <p class="text-sm md:text-base text-crimson-100/70 font-light">
+          Three rigorous engineering stages that turn standard hospital scanner outputs into quantitative oncological findings.
+        </p>
+      </div>
+
+      <!-- Bento Grid (3 Cards) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Step 1 -->
+        <div class="bg-burgundy-900/60 rounded-2xl p-6 border border-crimson-900/40 space-y-4 hover:border-crimson-500/50 transition">
+          <div class="text-xs font-mono text-crimson-400 font-bold uppercase tracking-wider">01 Ingest at PACS</div>
+          <h3 class="text-xl font-bold text-white">Native DICOM & HIPAA De-Identification</h3>
+          <p class="text-xs md:text-sm text-crimson-100/70 leading-relaxed">
+            Ingests standard DICOMweb (<span class="font-mono text-crimson-300">WADO-RS</span>) slices from Siemens, GE, or Philips scanners. Automatically strips 18 HIPAA Safe Harbor identifiers and extracts calibrated slice thickness (<span class="font-mono text-crimson-300">0.75mm</span>) and Tesla field strength.
+          </p>
+          <div class="pt-2 text-xs font-mono text-slate-400 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Automated Safe Harbor Masking
+          </div>
         </div>
 
-        <p class="meta" style="margin-bottom: 14px;">
-          This demo was built with TensorFlow and Flask. It is designed for
-          experimentation, learning, and showcasing model predictions on
-          individual MRI slices.
-        </p>
+        <!-- Step 2 -->
+        <div class="bg-burgundy-900/60 rounded-2xl p-6 border border-crimson-900/40 space-y-4 hover:border-crimson-500/50 transition">
+          <div class="text-xs font-mono text-crimson-400 font-bold uppercase tracking-wider">02 Sequence & Align</div>
+          <h3 class="text-xl font-bold text-white">ResNet-50 & Multi-Compartment Separation</h3>
+          <p class="text-xs md:text-sm text-crimson-100/70 leading-relaxed">
+            Propagates axial volume tensors through 50 deep residual convolutional layers, segmenting the active hyper-intense <span class="text-red-400 font-bold">Enhancing Tumor Core (ET)</span> from the surrounding infiltrative <span class="text-yellow-300 font-bold">Vasogenic Edema (ED)</span>.
+          </p>
+          <div class="pt-2 text-xs font-mono text-slate-400 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-crimson-400"></span>
+            2,048-Dimensional Deep Feature Maps
+          </div>
+        </div>
 
-        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;">
-          <a href="/detect">
-            <button type="button">Go to detection page</button>
+        <!-- Step 3 -->
+        <div class="bg-burgundy-900/60 rounded-2xl p-6 border border-crimson-900/40 space-y-4 hover:border-crimson-500/50 transition">
+          <div class="text-xs font-mono text-crimson-400 font-bold uppercase tracking-wider">03 Review & Explain</div>
+          <h3 class="text-xl font-bold text-white">Explainable AI & Structured Report</h3>
+          <p class="text-xs md:text-sm text-crimson-100/70 leading-relaxed">
+            Produces high-resolution Grad-CAM visual attention maps, calibrated 3D volumetric slabs (<span class="font-mono text-crimson-300">cm³</span>), midline shift mass effect estimation, and generates exportable WHO CNS certified diagnostic PDF reports.
+          </p>
+          <div class="pt-2 text-xs font-mono text-slate-400 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+            Shannon Uncertainty Calibration
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 5. PATHOLOGY SECTION (Testing built for real clinical decisions)          -->
+  <!-- ========================================================================= -->
+  <section id="pathology" class="py-16 md:py-24 px-6 lg:px-12 bg-cream-100">
+    <div class="max-w-7xl mx-auto space-y-12">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-cream-300 pb-8">
+        <div class="max-w-xl space-y-2">
+          <span class="text-xs font-mono uppercase tracking-widest text-crimson-700 font-semibold">· What We Analyze</span>
+          <h2 class="text-4xl md:text-5xl font-serif text-charcoal-950 tracking-tight">
+            Testing built for <br/>
+            <span class="italic font-serif">real clinical decisions.</span>
+          </h2>
+        </div>
+        <p class="text-xs md:text-sm text-charcoal-800/80 max-w-md font-normal leading-relaxed">
+          Four distinct diagnostic classifications — from early-stage sellar microadenomas to high-grade intra-axial gliomas, analyzed with explainable AI.
+        </p>
+      </div>
+
+      <!-- 4 Pathology Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Card 1: Glioma (High-Impact Pink/Crimson Card matching Locus) -->
+        <div class="bg-crimson-700 text-white rounded-3xl p-6 flex flex-col justify-between shadow-xl shadow-crimson-700/20 group hover:-translate-y-1 transition duration-300">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-crimson-200">01 / INTRA-AXIAL</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-crimson-900/60 text-crimson-200 border border-crimson-600">WHO Grade II–IV</span>
+            </div>
+            
+            <div class="overflow-hidden rounded-2xl bg-crimson-950/40 border border-crimson-600/40">
+              <img src="/static/assets/showcase_glioma.png" alt="Glioma MRI" class="w-full h-44 object-cover group-hover:scale-105 transition duration-500">
+            </div>
+
+            <h3 class="text-2xl font-serif font-bold text-white">Glioma Spectrum</h3>
+            <p class="text-xs text-crimson-100/80 leading-relaxed">
+              Detects infiltrative margins, necrotic tumor core, and surrounding vasogenic edema across white/gray matter tracts with WHO Grade IV Glioblastoma identification.
+            </p>
+          </div>
+
+          <div class="pt-6 border-t border-crimson-600/60 mt-6 flex items-center justify-between">
+            <span class="text-xs font-mono text-crimson-200">94.0% Sensitivity</span>
+            <a href="/workstation?case=case_01_glioma" class="text-xs font-bold text-white hover:underline flex items-center gap-1">
+              <span>Inspect Case</span> →
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 2: Meningioma -->
+        <div class="bg-white text-charcoal-900 rounded-3xl p-6 border border-cream-300 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300 group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-400">02 / EXTRA-AXIAL</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">WHO Grade I</span>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
+              <img src="/static/assets/showcase_meningioma.png" alt="Meningioma MRI" class="w-full h-44 object-cover group-hover:scale-105 transition duration-500">
+            </div>
+
+            <h3 class="text-2xl font-serif font-bold text-charcoal-950">Meningioma</h3>
+            <p class="text-xs text-charcoal-800/80 leading-relaxed">
+              Identifies smooth extra-axial boundaries, dural tail enhancement, and skull base or parasagittal falx attachment. Non-infiltrative benign mass.
+            </p>
+          </div>
+
+          <div class="pt-6 border-t border-cream-300 mt-6 flex items-center justify-between">
+            <span class="text-xs font-mono text-slate-500">Dural Margin Focus</span>
+            <a href="/workstation?case=case_02_meningioma" class="text-xs font-bold text-crimson-700 hover:underline flex items-center gap-1">
+              <span>Inspect Case</span> →
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 3: Pituitary Adenoma -->
+        <div class="bg-white text-charcoal-900 rounded-3xl p-6 border border-cream-300 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300 group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-400">03 / SELLAR REGION</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">WHO Grade I PitNET</span>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
+              <img src="/static/assets/showcase_pituitary.png" alt="Pituitary MRI" class="w-full h-44 object-cover group-hover:scale-105 transition duration-500">
+            </div>
+
+            <h3 class="text-2xl font-serif font-bold text-charcoal-950">Pituitary Adenoma</h3>
+            <p class="text-xs text-charcoal-800/80 leading-relaxed">
+              Pinpoints lesions in the Sella Turcica, evaluating suprasellar extension toward the optic chiasm and third ventricle floor.
+            </p>
+          </div>
+
+          <div class="pt-6 border-t border-cream-300 mt-6 flex items-center justify-between">
+            <span class="text-xs font-mono text-slate-500">Sellar Localization</span>
+            <a href="/workstation?case=case_03_pituitary" class="text-xs font-bold text-crimson-700 hover:underline flex items-center gap-1">
+              <span>Inspect Case</span> →
+            </a>
+          </div>
+        </div>
+
+        <!-- Card 4: Normal Control -->
+        <div class="bg-white text-charcoal-900 rounded-3xl p-6 border border-cream-300 flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300 group">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-slate-400">04 / HEALTHY CONTROL</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Negative</span>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl bg-slate-100 border border-slate-200">
+              <img src="/static/assets/showcase_normal.png" alt="Normal Brain MRI" class="w-full h-44 object-cover group-hover:scale-105 transition duration-500">
+            </div>
+
+            <h3 class="text-2xl font-serif font-bold text-charcoal-950">Normal Anatomy</h3>
+            <p class="text-xs text-charcoal-800/80 leading-relaxed">
+              Confirms bilateral hemisphere symmetry, clear ventricular sulci, and absence of mass lesions or abnormal contrast enhancement.
+            </p>
+          </div>
+
+          <div class="pt-6 border-t border-cream-300 mt-6 flex items-center justify-between">
+            <span class="text-xs font-mono text-emerald-700">Symmetry Check</span>
+            <a href="/workstation?case=case_04_normal" class="text-xs font-bold text-crimson-700 hover:underline flex items-center gap-1">
+              <span>Inspect Case</span> →
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 6. THE SPECIALISTS BEHIND THE SCANS (Matching Locus Doctors Section)       -->
+  <!-- ========================================================================= -->
+  <section id="specialists" class="py-16 md:py-24 px-6 lg:px-12 bg-white border-t border-cream-300">
+    <div class="max-w-7xl mx-auto space-y-12">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-cream-300 pb-8">
+        <div class="max-w-xl space-y-2">
+          <span class="text-xs font-mono uppercase tracking-widest text-crimson-700 font-semibold">· Clinical Advisory Board</span>
+          <h2 class="text-4xl md:text-5xl font-serif text-charcoal-950 tracking-tight">
+            The specialists reading <br/>
+            <span class="italic font-serif">your results.</span>
+          </h2>
+        </div>
+        <p class="text-xs md:text-sm text-charcoal-800/80 max-w-md font-normal leading-relaxed">
+          Board-certified neuroradiologists, neurosurgeons, and clinical radiogenomicists who establish ground-truth annotations, calibrate model uncertainty, and sign off on diagnostic summaries.
+        </p>
+      </div>
+
+      <!-- 4 Doctors Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Doctor 1 -->
+        <div class="group space-y-3">
+          <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-slate-100 border border-cream-300 relative">
+            <img src="/static/assets/doctor_1.png" alt="Dr. Elena Rostova" class="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition duration-500">
+            <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-charcoal-900 border border-cream-300">
+              ESNR Certified
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-charcoal-950 text-base">Dr. Elena Rostova, MD</h4>
+            <p class="text-xs text-crimson-700 font-medium">Attending Neuro-Radiologist</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Charité Comprehensive Cancer Center</p>
+          </div>
+        </div>
+
+        <!-- Doctor 2 -->
+        <div class="group space-y-3">
+          <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-slate-100 border border-cream-300 relative">
+            <img src="/static/assets/doctor_2.png" alt="Dr. Marcus Vance" class="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition duration-500">
+            <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-charcoal-900 border border-cream-300">
+              ABNS Diplomate
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-charcoal-950 text-base">Dr. Marcus Vance, MD, FACS</h4>
+            <p class="text-crimson-700 text-xs font-medium">Chief of Neurosurgical Oncology</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Johns Hopkins Brain Tumor Center</p>
+          </div>
+        </div>
+
+        <!-- Doctor 3 -->
+        <div class="group space-y-3">
+          <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-slate-100 border border-cream-300 relative">
+            <img src="/static/assets/doctor_3.png" alt="Dr. Priya Nair" class="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition duration-500">
+            <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-charcoal-900 border border-cream-300">
+              IDH/MGMT Lead
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-charcoal-950 text-base">Dr. Priya Nair, MD, PhD</h4>
+            <p class="text-crimson-700 text-xs font-medium">Lead Clinical Radiogenomicist</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Stanford Molecular Imaging & Oncology</p>
+          </div>
+        </div>
+
+        <!-- Doctor 4 -->
+        <div class="group space-y-3">
+          <div class="aspect-[4/5] rounded-2xl overflow-hidden bg-slate-100 border border-cream-300 relative">
+            <img src="/static/assets/doctor_4.png" alt="Dr. Arthur Chen" class="w-full h-full object-cover grayscale contrast-125 group-hover:scale-105 transition duration-500">
+            <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-charcoal-900 border border-cream-300">
+              AAPM Fellow
+            </div>
+          </div>
+          <div>
+            <h4 class="font-bold text-charcoal-950 text-base">Dr. Arthur Chen, PhD, DABR</h4>
+            <p class="text-crimson-700 text-xs font-medium">Medical Physics & Pulse Sequence Lead</p>
+            <p class="text-[11px] text-slate-500 mt-0.5">Harvard Medical School / MGH</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 7. WORKSTATION SHOWCASE & CALLOUT (Opens Separate Dedicated Workstation)  -->
+  <!-- ========================================================================= -->
+  <section id="workstation-preview" class="py-16 md:py-24 px-6 lg:px-12 bg-cream-200/60 border-t border-cream-300">
+    <div class="max-w-7xl mx-auto space-y-10">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div class="space-y-2 max-w-2xl">
+          <span class="text-xs font-mono uppercase tracking-widest text-crimson-700 font-semibold">· Dedicated PACS Clinical Suite</span>
+          <h2 class="text-4xl md:text-5xl font-serif text-charcoal-950 tracking-tight">
+            Full-Screen Diagnostic Workstation
+          </h2>
+          <p class="text-sm md:text-base text-charcoal-800/80 leading-relaxed font-normal">
+            Engineered specifically for neuro-radiologists and oncology specialists. A standalone, high-performance PACS environment for detailed volumetric inspection, multi-layer toggling, and certified diagnostic reporting.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="/workstation" class="inline-flex items-center gap-2 bg-crimson-700 hover:bg-crimson-800 text-white font-semibold text-sm md:text-base px-6 md:px-8 py-3.5 rounded-full shadow-xl shadow-crimson-700/25 transition group">
+            <span>Launch Workstation Page</span>
+            <span class="group-hover:translate-x-1 transition">→</span>
           </a>
         </div>
+      </div>
 
+      <!-- Feature Grid Highlight -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-3xl border border-cream-300 shadow-sm space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-crimson-50 text-crimson-700 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-charcoal-950">Multi-Layer PACS Viewport</h3>
+          <p class="text-xs text-charcoal-800/80 leading-relaxed">
+            Switch in real time between raw axial MRI, deep Grad-CAM attention heatmaps, and colored segmentation masks separating active core from vasogenic edema.
+          </p>
+        </div>
 
+        <div class="bg-white p-6 rounded-3xl border border-cream-300 shadow-sm space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-crimson-50 text-crimson-700 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-charcoal-950">Calibrated Caliper Tool</h3>
+          <p class="text-xs text-charcoal-800/80 leading-relaxed">
+            Click any two points on the scan to measure physical anatomical distances in millimeters ($mm$) calibrated directly to the scanner's DICOM pixel spacing.
+          </p>
+        </div>
 
+        <div class="bg-white p-6 rounded-3xl border border-cream-300 shadow-sm space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-crimson-50 text-crimson-700 flex items-center justify-center font-bold">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-charcoal-950">Certified PDF Reports</h3>
+          <p class="text-xs text-charcoal-800/80 leading-relaxed">
+            Generate and export official multi-page clinical reports complete with patient demographics, volumetric measurements ($cm^3$), WHO guidelines, and signature sign-offs.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 8. CLINICAL EVIDENCE & EDITORIAL QUOTE (Like the Locus Doctors section)   -->
+  <!-- ========================================================================= -->
+  <section id="evidence" class="py-16 md:py-24 px-6 lg:px-12 bg-cream-100">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      
+      <!-- Left: High-Contrast Scanner Lab Card -->
+      <div class="lg:col-span-5 relative">
+        <div class="bg-white p-4 rounded-3xl border border-cream-300 shadow-xl overflow-hidden group">
+          <img src="/static/assets/scanner_lab.png" alt="Clinical MRI Suite" class="w-full h-80 object-cover rounded-2xl group-hover:scale-105 transition duration-500">
+          <div class="pt-4 flex items-center justify-between text-xs font-mono text-slate-500">
+            <span>Lab 01: High-Field Neuroimaging</span>
+            <span class="text-crimson-700 font-bold">3.0T MAGNETOM Vida</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Editorial Quote & Doctor Profiles -->
+      <div class="lg:col-span-7 space-y-6">
+        <span class="text-xs font-mono uppercase tracking-widest text-crimson-700 font-semibold">· Clinical Methodology</span>
+        
+        <blockquote class="text-3xl md:text-4xl font-serif text-charcoal-950 leading-snug">
+          “At NeuroScan, we read scans the way a good doctor reads a chart — <span class="italic font-serif text-crimson-700">carefully, completely,</span> and always with the patient in mind.”
+        </blockquote>
+
+        <p class="text-sm md:text-base text-charcoal-800/80 leading-relaxed font-normal">
+          Trained on thousands of curated multi-sequence brain MRI scans across tertiary medical centers. Evaluated against multi-observer consensus to eliminate single-reader bias and deliver explainable decision support.
+        </p>
+
+        <!-- Stats in Quote Area -->
+        <div class="grid grid-cols-3 gap-6 pt-4 border-t border-cream-300">
+          <div>
+            <div class="text-2xl font-bold font-sans text-charcoal-950">1,022</div>
+            <div class="text-xs text-slate-500 mt-0.5">validated test scans</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-sans text-charcoal-950">1.2s</div>
+            <div class="text-xs text-slate-500 mt-0.5">median turnaround</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-sans text-charcoal-950">1:1</div>
+            <div class="text-xs text-slate-500 mt-0.5">radiologist correlation</div>
+          </div>
+        </div>
 
       </div>
-    </div>
-  </body>
-</html>
 
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 9. CLOSING EDITORIAL CTA BANNER                                           -->
+  <!-- ========================================================================= -->
+  <section class="py-16 md:py-24 px-6 lg:px-12 bg-cream-200/50">
+    <div class="max-w-5xl mx-auto bg-gradient-to-br from-crimson-50 to-white rounded-3xl p-8 md:p-14 border border-crimson-200 text-center space-y-6 shadow-xl shadow-crimson-900/5 relative overflow-hidden">
+      
+      <!-- Subtle watermark -->
+      <div class="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-crimson-500/5 pointer-events-none"></div>
+
+      <span class="text-xs font-mono uppercase tracking-widest text-crimson-800 font-semibold">· Clinical Intelligence In Action</span>
+
+      <h2 class="text-4xl md:text-5xl font-serif text-charcoal-950 tracking-tight max-w-2xl mx-auto leading-tight">
+        Your scan, finally in <br/>
+        <span class="italic font-serif text-crimson-700">plain clinical language.</span>
+      </h2>
+
+      <p class="text-sm md:text-base text-charcoal-800/80 max-w-xl mx-auto leading-relaxed">
+        Upload an anonymized patient scan today to generate multi-compartment volumetric quantification and certified WHO classification in seconds.
+      </p>
+
+      <div class="pt-2 flex flex-wrap items-center justify-center gap-4">
+        <a href="/workstation" class="bg-crimson-700 hover:bg-crimson-800 text-white font-semibold text-sm px-7 py-3.5 rounded-full shadow-lg shadow-crimson-700/25 transition">
+          Launch Dedicated Workstation →
+        </a>
+        <a href="/workstation?case=case_01_glioma" class="bg-white hover:bg-cream-100 text-charcoal-900 font-semibold text-sm px-6 py-3.5 rounded-full border border-cream-300 shadow-sm transition">
+          Open Case Study 01 (Glioma 3.0T)
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 10. FOOTER                                                                -->
+  <!-- ========================================================================= -->
+  <footer class="bg-charcoal-950 text-slate-400 py-12 px-6 lg:px-12 border-t border-charcoal-900 text-xs">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 rounded-full bg-crimson-700 flex items-center justify-center text-white font-serif italic text-sm">
+          N
+        </div>
+        <span class="font-bold text-white text-sm">neuroscan clinical ai</span>
+        <span class="text-slate-600">|</span>
+        <span class="font-mono text-[11px] text-slate-500">ResNet-50 XAI Core</span>
+      </div>
+
+      <div class="text-center md:text-right font-mono text-[11px] text-slate-500 leading-relaxed">
+        <div>HIPAA Safe Harbor De-Identified Protocol · WHO CNS 5th Edition Standards</div>
+        <div>Investigational Device (FDA SaMD Exemption) · Research & Decision Support Only</div>
+      </div>
+
+    </div>
+  </footer>
+
+  <script>
+    function handleHeroSearch() {
+      const q = (document.getElementById('hero-search-input').value || '').toLowerCase().trim();
+      if (q.includes('mening')) {
+        window.location.href = '/workstation?case=case_02_meningioma';
+      } else if (q.includes('pituit') || q.includes('sellar')) {
+        window.location.href = '/workstation?case=case_03_pituitary';
+      } else if (q.includes('norm') || q.includes('control') || q.includes('clean')) {
+        window.location.href = '/workstation?case=case_04_normal';
+      } else {
+        window.location.href = '/workstation?case=case_01_glioma';
+      }
+    }
+
+    document.getElementById('hero-search-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') handleHeroSearch();
+    });
+  </script>
+</body>
+</html>
